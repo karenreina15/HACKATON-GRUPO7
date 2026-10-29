@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SAMP Minero</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="marca">
+      <button id="btn-menu" class="btn-menu" type="button" aria-label="Abrir menú">☰</button>
+      <div class="marca-icono" data-sprite="minero" title="Minerito picando"></div>
+      <div>
+        <h1>SAMP Minero</h1>
+        <p class="subtitulo">Mina subterránea · Calidad de aire y condiciones ambientales</p>
+      </div>
+    </div>
+    <div class="topbar-der">
+      <button id="alarma" class="alarma" type="button" title="La alarma sonora está siempre activa">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4z" fill="currentColor"/></svg>
+        <span id="alarma-texto">Alarma sonora activa</span>
+      </button>
+      <div class="reloj">
+        <span class="reloj-etiqueta">Última lectura</span>
+        <span id="reloj" class="reloj-valor">--:--:--</span>
+      </div>
+      <div class="fuente">
+        <span id="indicador-conexion" class="punto punto-off"></span>
+        <span id="texto-conexion">Sin toma de datos</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="app">
+    <!-- MENÚ LATERAL -->
+    <nav id="sidebar" class="sidebar" aria-label="Secciones"></nav>
+
+    <main class="contenido">
+
+      <!-- BARRA DE CONTROL DE LA TOMA (siempre visible) -->
+      <section id="barra-control" class="card barra-control">
+        <div class="control-fila">
+          <label class="campo">
+            Escenario
+            <select id="sel-escenario"></select>
+          </label>
+          <div class="botones">
+            <button id="btn-iniciar" class="btn btn-primario" type="button">▶ Iniciar toma</button>
+            <button id="btn-pausar" class="btn" type="button">❚❚ Pausar</button>
+            <button id="btn-paso" class="btn" type="button" title="Recibir una sola lectura">+1 lectura</button>
+            <button id="btn-reiniciar" class="btn" type="button">↺ Reiniciar</button>
+          </div>
+          <label class="campo">
+            Velocidad
+            <select id="sel-velocidad">
+              <option value="1" selected>Tiempo real</option>
+              <option value="5">5× más rápido</option>
+              <option value="10">10× más rápido</option>
+              <option value="30">30× más rápido</option>
+            </select>
+          </label>
+        </div>
+        <div class="control-fila">
+          <div class="progreso">
+            <div class="progreso-texto"><span id="progreso-texto"></span><span id="progreso-estado"></span></div>
+            <div class="progreso-barra"><div id="progreso-relleno"></div></div>
+          </div>
+          <div class="toma-info">
+            <span id="toma-info"></span>
+            <button type="button" class="btn-link" data-ir-pagina="simulacion">Configurar ›</button>
+          </div>
+        </div>
+        <div class="control-fila programacion">
+          <span id="proxima-toma"></span>
+          <button id="btn-adelantar" class="btn btn-mini" type="button" title="En la simulación no es necesario esperar la hora programada">Adelantar próxima toma</button>
+        </div>
+        <p id="aviso-responsables" class="aviso-responsables" hidden></p>
+      </section>
+
+      <!-- PÁGINA: PANEL GENERAL -->
+      <section class="pagina" id="pag-panel" hidden>
+        <div class="card">
+          <div class="card-cabecera">
+            <h2>Cascos</h2>
+            <span class="ayuda">Haga clic en un casco para ver todas sus variables</span>
+          </div>
+          <div id="cascos" class="cascos"></div>
+        </div>
+      </section>
+
+      <!-- PÁGINA: OPERARIOS ACTIVOS -->
+      <section class="pagina" id="pag-operarios" hidden>
+        <div class="card">
+          <div class="card-cabecera">
+            <h2>Operarios activos</h2>
+            <span class="ayuda">Haga clic en un operario para ver su perfil personal, médico y de seguridad</span>
+          </div>
+          <div id="operarios-filtros" class="filtros-operarios"></div>
+          <p class="nota-operarios">Solo los operarios con la <b>capacitación en uso del casco</b> vigente pueden tener un casco asignado.</p>
+          <div id="operarios" class="operarios"></div>
+        </div>
+      </section>
+
+      <!-- PÁGINA: TENDENCIAS -->
+      <section class="pagina" id="pag-tendencias" hidden>
+        <div class="card">
+          <div class="card-cabecera">
+            <h2>Tendencia y proyección por casco</h2>
+            <span class="ayuda">Seleccione la variable · se muestran los 4 cascos</span>
+          </div>
+          <div id="tend-variables" class="tend-variables" role="radiogroup" aria-label="Variable"></div>
+          <h3 id="tend-titulo" class="tend-titulo"></h3>
+          <p id="tend-sub" class="ayuda tend-sub"></p>
+          <div id="graficos" class="graficos"></div>
+          <div class="leyenda">
+            <span><i class="ley-linea"></i>Lectura</span>
+            <span><i class="ley-linea ley-punteada"></i>Proyección de tendencia</span>
+            <span><i class="ley-area ley-precaucion"></i>Zona de precaución</span>
+            <span><i class="ley-area ley-peligro"></i>Zona de peligro</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- PÁGINA: DATOS RECIBIDOS -->
+      <section class="pagina" id="pag-datos" hidden>
+        <div class="card">
+          <div class="card-cabecera">
+            <h2>Datos recibidos</h2>
+            <span class="ayuda">Paquetes enviados por los cascos (simulados)</span>
+          </div>
+          <div id="flujo" class="flujo"></div>
+        </div>
+      </section>
+
+      <!-- PÁGINA: DETALLE DE CASCO -->
+      <section class="pagina" id="pag-casco" hidden>
+        <div class="card casco-encabezado">
+          <div>
+            <div class="casco-encabezado-titulo"><h2 id="ps-titulo"></h2><span id="ps-estado"></span></div>
+            <p class="ayuda" id="ps-meta"></p>
+          </div>
+          <div class="resp-fila">
+            <div id="ps-resp" class="resp-slot"></div>
+            <button type="button" id="ps-ver-casco" class="btn btn-mini">Ver casco</button>
+          </div>
+        </div>
+        <div id="ps-aviso" class="aviso-senal aviso-senal-grande" hidden></div>
+        <div id="ps-noapto" class="ps-noapto" hidden></div>
+        <div class="card">
+          <div class="card-cabecera">
+            <h2>Variables del sensor</h2>
+            <span id="meta-casco" class="ayuda"></span>
+          </div>
+          <div id="parametros" class="variables"></div>
+          <p class="ayuda nota-tabla">Haga clic en una variable para ver su tendencia.</p>
+        </div>
+      </section>
+
+      <!-- PÁGINA: REGISTRO -->
+      <section class="pagina" id="pag-registro" hidden>
+        <div class="card">
+          <div class="card-cabecera">
+            <h2>Registro de mediciones</h2>
+            <div class="filtros">
+              <label class="campo">Casco <select id="reg-casco"></select></label>
+              <button id="btn-exportar" class="btn" type="button">Exportar CSV</button>
+            </div>
+          </div>
+          <div class="resumen-turno">
+            <canvas id="pastel" class="pastel"></canvas>
+            <div>
+              <h3 class="resumen-titulo">Resumen del turno</h3>
+              <p class="ayuda">Estado de cada lectura según su variable más crítica</p>
+              <div id="pastel-leyenda" class="pastel-leyenda"></div>
+            </div>
+          </div>
+          <div class="tabla-scroll">
+            <table id="tabla-registro" class="tabla"></table>
+          </div>
+          <div id="pag-registro-controles"></div>
+        </div>
+      </section>
+
+      <!-- PÁGINA: RANGOS -->
+      <section class="pagina" id="pag-rangos" hidden>
+        <div class="card">
+          <div class="card-cabecera">
+            <h2>Rangos de seguridad</h2>
+            <div id="rangos-acciones" class="filtros"></div>
+          </div>
+          <p class="ayuda nota-rangos">Gases en % de volumen (1 % = 10 000 ppm) · partículas por tamaño en µm. Los cambios se guardan en este navegador.</p>
+          <p id="rangos-error" class="rangos-error" hidden></p>
+          <div class="tabla-scroll">
+            <table id="tabla-limites" class="tabla"></table>
+          </div>
+        </div>
+      </section>
+
+      <!-- PÁGINA: ESCENARIOS Y TOMA DE DATOS -->
+      <section class="pagina" id="pag-simulacion" hidden>
+        <div class="card">
+          <div class="card-cabecera">
+            <h2>Toma de datos</h2>
+            <span class="ayuda">Cada toma dura 1 minuto · la frecuencia la define la persona encargada</span>
+          </div>
+          <form id="form-toma" class="form-toma">
+            <fieldset class="campo-frecuencia">
+              <legend>Realizar el diagnóstico cada</legend>
+              <label><input id="cfg-horas" type="number" min="0" max="72" step="1" required> horas</label>
+              <label><input id="cfg-minutos" type="number" min="0" max="59" step="1" required> minutos</label>
+            </fieldset>
+            <label class="campo-vertical">
+              Intervalo entre lecturas
+              <select id="cfg-intervalo"></select>
+            </label>
+            <label class="campo-vertical">
+              Programado por
+              <input id="cfg-responsable" type="text" maxlength="60" placeholder="Nombre de quien define la frecuencia" required>
+            </label>
+            <p id="cfg-resumen" class="ayuda"></p>
+            <button class="btn btn-primario" type="submit">Guardar y reiniciar toma</button>
+          </form>
+        </div>
+        <div class="card">
+          <div class="card-cabecera">
+            <h2>Tomas realizadas</h2>
+            <span class="ayuda">Resumen del peor estado alcanzado por cada casco en cada toma</span>
+          </div>
+          <div class="tabla-scroll">
+            <table id="tabla-tomas" class="tabla"></table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-cabecera">
+            <h2>Escenarios de simulación</h2>
+            <span class="ayuda">Seleccione el escenario que enviarán los cascos</span>
+          </div>
+          <div id="lista-escenarios" class="escenarios" role="radiogroup" aria-label="Escenarios"></div>
+        </div>
+      </section>
+
+      <!-- PÁGINA: PLANES -->
+      <section class="pagina" id="pag-planes" hidden>
+        <div class="card">
+          <div class="card-cabecera">
+            <h2>Planes</h2>
+            <span class="ayuda">Instrucciones obligatorias y normativa aplicable · haga clic en un plan para desplegarlo</span>
+          </div>
+          <div id="planes" class="planes"></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- VENTANA DE DETALLE (casco, operario, casco no apto) -->
+  <div id="dialogo" class="dialogo-fondo" hidden>
+    <div class="dialogo" role="dialog" aria-modal="true" aria-labelledby="dialogo-titulo">
+      <div class="dialogo-cab">
+        <h2 id="dialogo-titulo"></h2>
+        <button type="button" class="dialogo-cerrar" data-cerrar-dialogo aria-label="Cerrar">✕</button>
+      </div>
+      <div id="dialogo-cuerpo" class="dialogo-cuerpo"></div>
+    </div>
+  </div>
+
+  <!-- ALERTA DE EVACUACIÓN -->
+  <div id="modal-evacuacion" class="modal-fondo" role="alertdialog" aria-modal="true" aria-labelledby="modal-titulo" hidden>
+    <div class="modal">
+      <div class="modal-cab">
+        <span class="modal-icono" data-sprite="evacuando"></span>
+        <div>
+          <h2 id="modal-titulo">¡EVACUACIÓN INMEDIATA!</h2>
+          <p id="modal-sub"></p>
+        </div>
+      </div>
+      <ul id="modal-lista" class="modal-lista"></ul>
+      <p class="modal-instr">Abandone la zona por la ruta de evacuación señalizada hacia la cámara refugio o la salida más cercana.
+        El supervisor de zona debe confirmar el conteo del personal con el centro de control.</p>
+      <div class="modal-botones">
+        <button id="btn-silenciar" class="btn btn-silenciar" type="button">Silenciar alarma</button>
+        <button id="btn-cerrar-modal" class="btn btn-primario" type="button">Entendido</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="pie">
+    Prototipo de simulación · Hackatón Grupo 7 · Sin conexión a sensores reales
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/sprites.js"></script>
+  <script src="js/scenarios.js"></script>
+  <script src="js/simulator.js"></script>
+  <script src="js/analysis.js"></script>
+  <script src="js/chart.js"></script>
+  <script src="js/planes.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
